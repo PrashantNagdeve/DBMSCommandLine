@@ -118,7 +118,19 @@ public class HomePage {
     }
     public int getInt()
     { // Reading from System.in
-        int input = reader.nextInt(); // Scans the next token of the input as an int.
+        String inputString="";
+        int input=-1;
+        while (input==-1)
+        {
+            try
+            {
+                inputString = reader.nextLine();
+                input=Integer.parseInt(inputString);
+            }
+            catch (Exception e)
+            {
+            }
+        } // Scans the next token of the input as an int.
         return input;
     }
 }

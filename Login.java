@@ -15,7 +15,8 @@ public class Login {
     private String username;
     private String password;
     private String role;
-    String input;
+    int input=0;
+    String inputString="";
     private Connection connection;
     Scanner reader = new Scanner(System.in);
     public Login(Connection _connection)
@@ -26,52 +27,53 @@ public class Login {
     }
     public void showLoginPage()
     {
-        show("Please enter login credentials:");
-        show("Username:");
-        username=getStr();
-        show("Passwords:");
-        password=getPassword();
-        show("Are you a Professor? Y or N:");
-        input=getStr();
+        show("Enter 1 to login, 2 to signup:");
+        input=getInt();
+        if(input==1)
+        {
+            show("Please enter login credentials:");
+            show("Username:");
+            username=getStr();
+            show("Passwords:");
+            password=getPassword();
+            show("Are you a Professor? Y or N:");
+            inputString=getStr();
 
-        if(input.equals("Y"))
-        {
-            role="P";
-        }
-        else
-        {
-            show("Are you a TA? Y or N:");
-            input=getStr();
-            if(input.equals("Y"))
+            if(inputString.equalsIgnoreCase("Y"))
             {
-                role="T";
+                role="P";
             }
             else
             {
-                role="S";
+                show("Are you a TA? Y or N:");
+                inputString=getStr();
+                if(inputString.equalsIgnoreCase("Y"))
+                {
+                    role="T";
+                }
+                else
+                {
+                    role="S";
+                }
             }
-        }
-        show("Enter 1 to login, 0 to retry:");
-        int option = getInt();
-        if(option==1)
-        {
-            OracleCallableStatement statement;
-            String sp="{call sp_login (?,?,?)}";
-            try {
-                statement = (OracleCallableStatement) connection.prepareCall(sp);
-                statement.setString(1,username);
-                statement.setString(2,password);
-                statement.registerOutParameter(3,oracle.jdbc.OracleTypes.CURSOR);
-                statement.execute();
+            show("Enter 1 to login, 0 to retry:");
+            int option = getInt();
+            if(option==1)
+            {
+                OracleCallableStatement statement;
+                String sp="{call sp_login (?,?,?,?)}";
+                try {
+                    statement = (OracleCallableStatement) connection.prepareCall(sp);
+                    statement.setString(1,username);
+                    statement.setString(2,password);
+                    statement.setString(3,role);
+                    statement.registerOutParameter(4,Types.INTEGER);
+                    statement.execute();
 
-                ResultSet rs = statement.getCursor(3);
-                String found="0";
-                if(rs!=null) {
-                    while (rs.next()) {
-                        found = rs.getString(1);
-                    }
-                    show(found);
-                    if (found.equals("1")) {
+                    int found=statement.getInt(4);
+
+                    show(found+"");
+                    if (found==1) {
                         if (role.equals("P")) {
                             clearScreen();
                             HomepageInstructor homepage = new HomepageInstructor(connection, username, this);
@@ -85,21 +87,84 @@ public class Login {
                             }
                         }
                     }
-                }
+                    else
+                    {
+                        showLoginPage();
+                    }
+
                 /*else {
                     ResultSet rs = statement.getResultSet();
                     while (rs.next()) {
                         System.out.println("Name : " + rs.getString(3));
                     }
                 }*/
-            } catch (SQLException e) {
-                e.printStackTrace();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+
+        }
+        else if(input==2)
+        {
+            String firstName="",lastName="";
+            show("Please enter SignUp credentials:");
+            show("Username:");
+            username=getStr();
+            show("First Name:");
+            firstName=getStr();
+            show("Last Name:");
+            lastName=getStr();
+            show("Passwords:");
+            password=getPassword();
+            show("Are you a Professor? Y or N:");
+            inputString=getStr();
+
+            if(inputString.equalsIgnoreCase("Y"))
+            {
+                role="P";
+            }
+            else
+            {
+                role="S";
+            }
+            show("Enter 1 to signUp, 0 to retry:");
+            int option = getInt();
+            if(option==1)
+            {
+                OracleCallableStatement statement;
+                String sp="{call SP_SIGNUP (?,?,?,?,?,?)}";
+                try {
+                    statement = (OracleCallableStatement) connection.prepareCall(sp);
+                    statement.setString(1,username);
+                    statement.setString(2,firstName);
+                    statement.setString(3,lastName);
+                    statement.setString(4,role);
+                    statement.setString(5,role);
+                    statement.registerOutParameter(6,Types.INTEGER);
+                    statement.execute();
+
+                    int found=statement.getInt(6);
+                    if(found==2)
+                        show("Success");
+                    else
+                        show("User already exists");
+                    showLoginPage();
+
+
+                /*else {
+                    ResultSet rs = statement.getResultSet();
+                    while (rs.next()) {
+                        System.out.println("Name : " + rs.getString(3));
+                    }
+                }*/
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
             }
         }
         else
-        {
             showLoginPage();
-        }
+
     }
     public void show(String statement)
     {
@@ -108,7 +173,9 @@ public class Login {
     public String getStr()
     {
           // Reading from System.in
-        String str = reader.nextLine(); // Scans the next token of the input as an int.
+        String str="";
+        while (str.equals(""))
+            str = reader.nextLine(); // Scans the next token of the input as an int.
         return str;
     }
 
@@ -125,7 +192,19 @@ public class Login {
 
     public int getInt()
     { // Reading from System.in
-        int input = reader.nextInt(); // Scans the next token of the input as an int.
+        String inputString="";
+        int input=-1;
+        while (input==-1)
+        {
+            try
+            {
+                inputString = reader.nextLine();
+                input=Integer.parseInt(inputString);
+            }
+            catch (Exception e)
+            {
+            }
+        } // Scans the next token of the input as an int.
         return input;
     }
 
